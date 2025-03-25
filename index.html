@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Visualizador de Fracciones</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+      margin: 0;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    form {
+      background-color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    label {
+      font-weight: 500;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #219150;
+    }
+
+    #charts {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px;
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    #pieChart {
+      max-width: 200px;
+    }
+
+    .segment-bar {
+      width: 100%;
+      height: 30px;
+      border: 1px solid #ddd;
+      display: flex;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .segment {
+      flex: 1;
+      border-right: 1px solid #eee;
+    }
+
+    .segment:last-child {
+      border-right: none;
+    }
+
+    .filled {
+      background-color: #27ae60;
+    }
+
+    #percentage {
+      font-weight: bold;
+      font-size: 18px;
+      color: #34495e;
+    }
+
+    @media (max-width: 600px) {
+      form, #charts {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Visualizador de Fracciones</h1>
+  <form id="fractionForm">
+    <label for="fractionInput">Introduce la fracción (por ejemplo 12/62):</label>
+    <input type="text" id="fractionInput" name="fraction" required>
+    <button type="submit">Visualizar</button>
+  </form>
+
+  <div id="charts">
+    <canvas id="pieChart" width="200" height="200"></canvas>
+    <div id="segmentBar" class="segment-bar"></div>
+    <p id="percentage"></p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.getElementById('fractionForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fractionStr = document.getElementById('fractionInput').value.trim();
+      const parts = fractionStr.split('/');
+
+      if (parts.length !== 2) {
+        alert('Formato incorrecto. Usa el formato numerador/denominador (ej. 12/62).');
+        return;
+      }
+
+      const numerator = parseFloat(parts[0]);
+      const denominator = parseFloat(parts[1]);
+
+      if (isNaN(numerator) || isNaN(denominator) || denominator === 0) {
+        alert('Valores inválidos. Asegúrate de que ambos sean números y el denominador no sea 0.');
+        return;
+      }
+
+      const percentage = ((numerator / denominator) * 100).toFixed(2);
+
+      // Pie chart
+      const ctx = document.getElementById('pieChart').getContext('2d');
+      if (window.myPieChart) {
+        window.myPieChart.destroy();
+      }
+      window.myPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Parte', 'Resto'],
+          datasets: [{
+            data: [numerator, denominator - numerator],
+            backgroundColor: ['#27ae60', '#ecf0f1']
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.label + ': ' + context.parsed;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Segment bar
+      const segmentBar = document.getElementById('segmentBar');
+      segmentBar.innerHTML = '';
+
+      for (let i = 0; i < denominator; i++) {
+        const segmentDiv = document.createElement('div');
+        segmentDiv.classList.add('segment');
+        if (i < numerator) {
+          segmentDiv.classList.add('filled');
+        }
+        segmentBar.appendChild(segmentDiv);
+      }
+
+      document.getElementById('percentage').innerText = 'Porcentaje: ' + percentage + '%';
+    });
+  </script>
+</body>
+</html>
